@@ -1,6 +1,6 @@
 ---
 name: context-handoff
-version: "1.0.0"
+version: "1.1.0"
 display_name: 上下文交接（会话分支）
 display_name_en: Context Handoff
 description: Use when the conversation context is filling up and the user wants to branch the current session into a new one that continues from the same context. Triggers include "分支会话", "分支出去", "导出上下文", "上下文交接", "handoff", "把上下文带过去", "新会话接着做", "上下文快满了", "开个新窗口继续". Exports the current WorkBuddy session (local jsonl transcript plus project and git state) into portable handoff files under <cwd>/.workbuddy/handoff/, and restores progress in a new session by reading them.
@@ -45,12 +45,19 @@ agent_created: true
    - 待办/下一步：按顺序、写成可直接执行的命令；
    - 卡点/坑点：失败现象、已排除的方向、注意事项。
 
-4. 向用户回报交接文件路径，并给出下面这段开场白（供复制到新会话）：
+4. **把开场白直接写入系统剪贴板**，省掉用户复制这一步（Windows 用 PowerShell `Set-Clipboard`，macOS 用 `pbcopy`）：
 
    ```text
    请阅读交接文件并接着做：<handoff-xxx.md>
-   （如需细节，再读同目录的 .brief.md / .full.md）
+   （摘要区块若为空，请先读同目录 .brief.md 自行补全并复述）
    ```
+
+5. 向用户回报交接文件路径，并给出**最省操作**的恢复路径（WorkBuddy 侧无法程序化建任务，必须用户点两下）：
+
+   - 左侧**把鼠标悬停到该项目所在的空间分组**上 → 点右侧「**新建任务**」（会自动带上该工作空间，不必手动选目录）；
+   - 输入框 `Ctrl+V` 粘贴（剪贴板已就绪）→ 回车。
+
+   > 不要建议用户手动「选择工作空间」，悬停分组新建更省事且不会选错。
 
 ## 流程 B：在新会话恢复
 
@@ -77,6 +84,8 @@ agent_created: true
 
 ## 注意事项
 
+- **先判断用户到底要什么**：若只是「想要另一个窗口看同一个任务」，直接用内置的「在独立窗口中打开」（任务行 `⋯` / 右键），上下文完全共享，**不需要交接**。只有要「全新会话但保留进度」时才走本技能。
+- **WorkBuddy 目前没有程序化的「新建任务并预填」入口**（已实测：`workbuddy://` 深链只有 chat/home/skills/connectors/experts/channels/automation/teams，无任务预填路由；无新建任务菜单快捷键；调试端口未开启），所以「一键分支」无法完全自动化，最少仍需用户在 UI 点「新建任务」+ `Ctrl+V`。不要反复尝试自动化点击 UI。
 - 环境要求：**Node.js 18+**，零第三方依赖（仅用内置模块），无需 npm install。
 - 依赖 WorkBuddy 本地会话记录（`~/.workbuddy/projects/<slug>/*.jsonl`）。若目录命名变化导致定位失败，用 `--session` 或 `--project` 指定。
 - `.full.md` 可能是数 MB，**不要整篇读入上下文**，用 grep 定位。
