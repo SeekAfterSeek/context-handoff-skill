@@ -1,0 +1,13 @@
+# 依赖与运行时产物（本技能零依赖，仅作兜底）
+node_modules/
+package-lock.json
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# 交接产物（默认输出到目标项目目录，此处仅防误提交）
+.workbuddy/handoff/
+*.log
